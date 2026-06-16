@@ -74,10 +74,10 @@
     </main>
 
     <script>
-        // Inteligência que detecta se você está rodando no computador ou se já enviou pro ar
+        // Mantém a configuração inteligente idêntica ao cadastro
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:3000' 
-            : 'https://backmin.vercel.app';
+            : ''; 
 
         async function fazerLogin() {
             const identificacao = document.getElementById('login-identificacao').value.trim();
@@ -99,15 +99,23 @@
                 btnSubmit.innerText = "ENTRANDO...";
                 btnSubmit.disabled = true;
 
+                // Envia a requisição direto para a rota correta da Vercel /api/auth/login
                 const response = await fetch(`${API_URL}/api/auth/login`, { 
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ rm: identificacao, senha: senha })
                 });
                 
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.message || result.error || 'Dados incorretos!');
+                
+                if (!response.ok) {
+                    throw new Error(result.message || result.error || 'Dados de acesso incorretos!');
+                }
 
+                // Armazena com sucesso os dados retornados pelo seu server.js
                 if (result.success && result.aluno) {
                     localStorage.setItem('aluno_token', result.aluno.rm);
                     localStorage.setItem('aluno_rm', result.aluno.rm);
@@ -118,10 +126,14 @@
                 alertText.innerText = "Login efetuado com sucesso! Redirecionando...";
                 alertDiv.classList.remove('hidden');
 
+                // Redireciona para a index.html assim que logar
                 setTimeout(() => { window.location.href = 'index.html'; }, 800);
 
             } catch (error) {
-                alertText.innerText = error.message;
+                // Se der erro de rede (Failed to fetch), trata de forma limpa e avisa o usuário
+                alertText.innerText = error.message === "Failed to fetch" 
+                    ? "Erro ao conectar com o servidor. Verifique os dados inseridos ou tente novamente." 
+                    : error.message;
                 alertDiv.classList.remove('hidden');
                 btnSubmit.innerText = "ENTRAR NA CONTA";
                 btnSubmit.disabled = false;
