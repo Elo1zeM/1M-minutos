@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Integração SESI-SENAI</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-[#E3F2FD] to-blue-100 min-h-screen flex flex-col text-gray-800 selection:bg-blue-200">
+
+    <header class="bg-gradient-to-r from-[#2C558A] to-[#5BA3F6] border-t-[8px] border-[#282D35] w-full py-7 text-center text-white shadow-md">
+        <h2 class="text-[13px] md:text-sm font-semibold tracking-[0.25em] text-blue-100 uppercase mb-2">
+            Integração Sesi-Senai
+        </h2>
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight drop-shadow-md">
+            1 Milhão de Minutos de Leitura
+        </h1>
+    </header>
+
+    <main class="flex-1 flex items-center justify-center p-6 w-full max-w-5xl mx-auto gap-8 lg:gap-16">
+        
+        <div class="bg-white/80 backdrop-blur-lg p-8 md:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-white w-full max-w-md relative transition-all duration-300 hover:shadow-[0_8px_40px_rgb(0,0,0,0.12)]">
+            
+            <div id="login-alert" class="hidden mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg relative text-sm shadow-sm" role="alert">
+                <span class="block sm:inline font-medium" id="alert-text"></span>
+            </div>
+
+            <form id="login-form" onsubmit="event.preventDefault(); fazerLogin();" class="space-y-5">
+                
+                <div>
+                    <label for="login-identificacao" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
+                        E-mail Institucional/RM
+                    </label>
+                    <input type="text" id="login-identificacao" placeholder="exemplo@aluno.sesisenai.br" 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 placeholder-gray-400 shadow-sm" required>
+                </div>
+
+                <div>
+                    <label for="login-unidade" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
+                        Unidade Escolar
+                    </label>
+                    <input type="text" id="login-unidade" placeholder="Qual a sua escola?" 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 placeholder-gray-400 shadow-sm" required>
+                </div>
+
+                <div>
+                    <label for="login-turma" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
+                        Turma/Ano
+                    </label>
+                    <input type="text" id="login-turma" placeholder="Ex: 3º Ano B" 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 placeholder-gray-400 shadow-sm" required>
+                </div>
+
+                <div>
+                    <label for="login-senha" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
+                        Senha
+                    </label>
+                    <input type="password" id="login-senha" placeholder="••••••••••••" 
+                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 placeholder-gray-400 shadow-sm font-sans tracking-widest" required>
+                </div>
+
+                <div class="flex justify-end pt-1">
+                    <a href="esqueceu.html" class="text-sm text-blue-600 hover:text-blue-800 hover:underline transition font-medium">Esqueceu a senha?</a>
+                </div>
+
+                <div class="mt-8 pt-2">
+                    <button type="submit" 
+                        class="w-full bg-gradient-to-r from-[#5CA6F8] to-[#3A82D0] hover:from-[#4999F5] hover:to-[#2B6CB0] text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-300 shadow-lg hover:shadow-blue-500/40 text-lg tracking-wide transform hover:-translate-y-0.5">
+                        ENTRAR NA CONTA
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="hidden md:flex flex-col items-center w-64 lg:w-80 transition-transform duration-500 hover:-translate-y-3 cursor-pointer">
+            <img src="https://via.placeholder.com/300x350.png?text=Coloque+a+imagem+do+Pato+Aqui" alt="Mascote Pato Lendo" class="w-full object-contain drop-shadow-2xl">
+        </div>
+
+    </main>
+
+    <script>
+        const API_URL = 'https://backmin.vercel.app/api'; 
+
+        async function fazerLogin() {
+            const identificacao = document.getElementById('login-identificacao').value.trim();
+            const senha = document.getElementById('login-senha').value.trim();
+            
+            const alertDiv = document.getElementById('login-alert');
+            const alertText = document.getElementById('alert-text');
+
+            alertDiv.classList.add('hidden');
+
+            if (!identificacao || !senha) {
+                alertText.innerText = "Por favor, preencha todos os campos obrigatórios.";
+                alertDiv.classList.remove('hidden');
+                
+                // Adiciona um pequeno efeito de tremor no alerta
+                alertDiv.classList.add('animate-bounce');
+                setTimeout(() => alertDiv.classList.remove('animate-bounce'), 1000);
+                return;
+            }
+
+            try {
+                // Modifique o botão durante o carregamento para feedback visual
+                const btnSubmit = document.querySelector('button[type="submit"]');
+                const btnOriginalText = btnSubmit.innerText;
+                btnSubmit.innerText = "CARREGANDO...";
+                btnSubmit.classList.add('opacity-80', 'cursor-not-allowed');
+
+                /* * ESPAÇO RESERVADO PARA A SUA API AQUI (Descomente quando o backend suportar senha)
+                 * const response = await fetch(`${API_URL}/login`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rm: identificacao, senha: senha })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Credenciais inválidas.');
+                localStorage.setItem('aluno_token', result.token);
+                // ... outros sets ...
+                */
+
+                // Simulação de tempo de rede para ver o botão "Carregando..." (pode apagar depois)
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 800);
+
+            } catch (error) {
+                alertText.innerText = error.message;
+                alertDiv.classList.remove('hidden');
+                
+                // Restaura o botão em caso de erro
+                const btnSubmit = document.querySelector('button[type="submit"]');
+                btnSubmit.innerText = "ENTRAR NA CONTA";
+                btnSubmit.classList.remove('opacity-80', 'cursor-not-allowed');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('aluno_token')) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>
