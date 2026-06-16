@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Campanha de Leitura SESI-SENAI</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -26,9 +28,10 @@
         }
     </script>
 </head>
+
 <body class="bg-[#F8F9FA] text-slate-800 font-sans min-h-screen flex flex-col">
 
-   <header class="bg-gradient-to-r from-[#2C558A] to-[#5BA3F6] w-full py-7 text-center text-white shadow-md">
+    <header class="bg-gradient-to-r from-[#2C558A] to-[#5BA3F6] w-full py-7 text-center text-white shadow-md">
         <h2 class="text-[13px] md:text-sm font-semibold tracking-[0.25em] text-blue-100 uppercase mb-2">
             Integração Sesi-Senai
         </h2>
@@ -38,28 +41,49 @@
     </header>
 
     <div class="max-w-4xl mx-auto w-full p-4 md:p-8 space-y-10 flex-1">
-        
+
         <!-- ================= INÍCIO (META, LIDOS, MASCOTE) ================= -->
         <section class="space-y-6">
-            
+
             <div class="bg-sesi-light border-l-[12px] border-sesi-border p-5 md:p-6 rounded-r-lg shadow-sm">
-                <h2 class="text-[#2965A7] font-bold text-xl md:text-2xl mb-1">Olá, <span id="aluno-nome">Estudante</span>!</h2>
-                <p class="text-slate-600 font-medium text-sm md:text-base">Pronto para registrar a sua leitura de hoje e ajudar a alcançar a nossa meta coletiva?</p>
-                <p class="text-xs text-slate-500 mt-2 hidden">Unidade: <span id="aluno-unidade">--</span> | Turma: <span id="aluno-turma">--</span></p>
+
+                <div class="flex justify-end mb-3">
+                    <button onclick="sairDaConta()"
+                        class="flex items-center gap-2 text-xs font-bold text-red-600 hover:text-red-800 bg-white/60 hover:bg-white px-3 py-1.5 rounded-xl transition-all duration-200 shadow-sm border border-red-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                            stroke="currentColor" class="w-3.5 h-3.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                        </svg>
+                        Sair da Conta
+                    </button>
+                </div>
+
+                <h2 class="text-[#2965A7] font-bold text-xl md:text-2xl mb-1">Olá, <span
+                        id="aluno-nome">Estudante</span>!</h2>
+                <p class="text-slate-600 font-medium text-sm md:text-base">Pronto para registrar a sua leitura de hoje e
+                    ajudar a alcançar a nossa meta coletiva?</p>
+                <p class="text-xs text-slate-500 mt-2 hidden">Unidade: <span id="aluno-unidade">--</span> | Turma: <span
+                        id="aluno-turma">--</span></p>
             </div>
 
-            <div class="bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-8 md:p-10 border border-slate-100 text-center">
-                <h3 class="text-[#4482CF] font-bold text-lg md:text-xl uppercase tracking-wider mb-4">Meta da Escola</h3>
-                
+            <div
+                class="bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-8 md:p-10 border border-slate-100 text-center">
+                <h3 class="text-[#4482CF] font-bold text-lg md:text-xl uppercase tracking-wider mb-4">Meta da Escola
+                </h3>
+
                 <div class="flex items-baseline justify-center gap-2 mb-2">
                     <span id="school-total" class="text-5xl md:text-6xl font-black text-[#2965A7]">0</span>
                 </div>
-                <p class="text-slate-500 font-medium text-sm md:text-base mb-8">de <span id="school-target">1.000.000</span> min</p>
-                
+                <p class="text-slate-500 font-medium text-sm md:text-base mb-8">de <span
+                        id="school-target">1.000.000</span> min</p>
+
                 <div class="w-full bg-[#E5F0FA] rounded-full h-5 md:h-6 overflow-hidden mb-3">
-                    <div id="school-progress-bar" class="bg-[#5695E7] h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    <div id="school-progress-bar"
+                        class="bg-[#5695E7] h-full rounded-full transition-all duration-1000 ease-out"
+                        style="width: 0%"></div>
                 </div>
-                
+
                 <div class="flex justify-between text-xs md:text-sm font-semibold text-slate-800 px-1">
                     <span id="school-percentage">0% Concluído</span>
                     <span id="school-remaining">1.000.000 min restantes</span>
@@ -68,17 +92,23 @@
 
             <div class="flex flex-col md:flex-row gap-6 relative">
                 <div class="flex-1 grid grid-cols-2 gap-6">
-                    <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-6 flex flex-col items-center justify-center border border-slate-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#4482CF] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div
+                        class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-6 flex flex-col items-center justify-center border border-slate-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#4482CF] mb-3" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <p id="user-total-badge" class="text-2xl font-bold text-[#4482CF]">0 min</p>
                         <p class="text-sm font-medium text-slate-500">Lidos por você</p>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-6 flex flex-col items-center justify-center border border-slate-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#4482CF] mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <div
+                        class="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-6 flex flex-col items-center justify-center border border-slate-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-[#4482CF] mb-3" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <p id="user-streak-badge" class="text-2xl font-bold text-[#4482CF]">0 dias</p>
                         <p class="text-sm font-medium text-slate-500">Ofensiva atual</p>
@@ -94,12 +124,17 @@
 
         <!-- ================= BOTÃO REGISTRAR ================= -->
         <section class="mt-8">
-            <a href="registrar.html" class="flex flex-col md:flex-row items-center justify-center gap-4 bg-[#4482CF] hover:bg-[#2C558A] transition-colors duration-300 rounded-2xl shadow-lg p-6 md:p-8 text-white text-center group cursor-pointer border-b-4 border-[#2C558A]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            <a href="registrar.html"
+                class="flex flex-col md:flex-row items-center justify-center gap-4 bg-[#4482CF] hover:bg-[#2C558A] transition-colors duration-300 rounded-2xl shadow-lg p-6 md:p-8 text-white text-center group cursor-pointer border-b-4 border-[#2C558A]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 group-hover:scale-110 transition-transform"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
                 <h2 class="text-2xl md:text-3xl font-bold tracking-wide">Registrar Minutos de Hoje</h2>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 ml-auto hidden md:block opacity-70 group-hover:opacity-100 group-hover:translate-x-2 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    class="h-8 w-8 ml-auto hidden md:block opacity-70 group-hover:opacity-100 group-hover:translate-x-2 transition-all"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
             </a>
@@ -107,13 +142,14 @@
 
         <!-- ================= RANKING DAS SALAS ================= -->
         <section class="mt-12 pt-8 border-t border-slate-200">
-            <h2 class="text-center text-[#2965A7] font-black text-2xl tracking-wide uppercase mb-8">Painel de Acompanhamento</h2>
-            
+            <h2 class="text-center text-[#2965A7] font-black text-2xl tracking-wide uppercase mb-8">Painel de
+                Acompanhamento</h2>
+
             <div class="bg-[#F8F9FA] rounded-3xl p-6 md:p-8 border border-slate-200 max-w-3xl mx-auto">
                 <div class="flex items-center gap-3 mb-6 font-bold text-xl text-[#2965A7]">
                     <span class="text-2xl">🏆</span> RANKING ENTRE SALAS
                 </div>
-                
+
                 <div id="ranking-container" class="space-y-4">
                     <p class="text-sm text-slate-400 text-center py-4">Aguardando dados das turmas...</p>
                 </div>
@@ -122,14 +158,17 @@
 
         <!-- ================= GRÁFICO HISTÓRICO ================= -->
         <section class="mt-12">
-            <div class="bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row items-center gap-8">
+            <div
+                class="bg-white rounded-3xl shadow-[0_4px_20px_rgb(0,0,0,0.04)] p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row items-center gap-8">
                 <div class="flex-1 w-full text-center relative">
-                    <p id="chart-total-minutes" class="text-sm font-medium text-slate-800 mb-6 absolute top-0 left-0 right-0">Aguardando histórico...</p>
+                    <p id="chart-total-minutes"
+                        class="text-sm font-medium text-slate-800 mb-6 absolute top-0 left-0 right-0">Aguardando
+                        histórico...</p>
                     <div class="h-64 mt-8 w-full flex items-center justify-center">
                         <canvas id="chart-individual"></canvas>
                     </div>
                 </div>
-                
+
                 <div class="hidden md:flex w-48 justify-center shrink-0">
                     <img src="./img/pato.png" alt="Pato Lendo" class="w-full object-contain">
                 </div>
@@ -137,14 +176,14 @@
         </section>
 
     </div>
-<script>
+    <script>
         // CONFIGURAÇÃO CORRIGIDA: Alinhada com o roteamento unificado do seu vercel.json
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'http://localhost:3000/api' 
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000/api'
             : '/api'; // Usa a mesma URL da Vercel que deu certo no login e cadastro
 
         // Puxa o token correto salvo pelo seu login.html
-        const ALUNO_RM = localStorage.getItem('aluno_token') || localStorage.getItem('aluno_rm'); 
+        const ALUNO_RM = localStorage.getItem('aluno_token') || localStorage.getItem('aluno_rm');
         let chartInstance = null;
 
         // Se o aluno não tiver um token/RM salvo, manda de volta para o login por segurança
@@ -171,7 +210,7 @@
                     document.getElementById('aluno-nome').innerText = data.aluno.nome;
                     const infoUnidade = document.getElementById('aluno-unidade').parentElement;
                     if (infoUnidade) infoUnidade.classList.remove('hidden');
-                    
+
                     document.getElementById('aluno-unidade').innerText = data.aluno.unidade_escolar || 'SESI';
                     document.getElementById('aluno-turma').innerText = data.aluno.turma;
                 }
@@ -191,7 +230,7 @@
                     document.getElementById('school-target').innerText = metaFixa.toLocaleString('pt-BR');
                     document.getElementById('school-progress-bar').style.width = `${data.porcentagem}%`;
                     document.getElementById('school-percentage').innerText = `${data.porcentagem}% Concluído`;
-                    
+
                     const restante = metaFixa - data.totalMinutos;
                     document.getElementById('school-remaining').innerText = `${restante.toLocaleString('pt-BR')} min restantes`;
                 }
@@ -222,7 +261,7 @@
                             const [ano, mes, dia] = dataPura.split('-');
                             const dataObjeto = new Date(ano, mes - 1, dia);
                             const diaSemanaTexto = diasSemanaMapa[dataObjeto.getDay()];
-                            
+
                             if (minutosPorDia[diaSemanaTexto] !== undefined) {
                                 minutosPorDia[diaSemanaTexto] += item.minutos_lidos;
                             }
@@ -234,7 +273,7 @@
                         renderizarGrafico(labels, valores);
                     } else {
                         document.getElementById('chart-total-minutes').innerText = 'Nenhuma leitura registrada ainda.';
-                        renderizarGrafico(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], [0, 0, 0, 0, 0, 0, 0]); 
+                        renderizarGrafico(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], [0, 0, 0, 0, 0, 0, 0]);
                     }
                 }
             } catch (error) {
@@ -253,15 +292,15 @@
 
                 if (data.success && data.ranking && data.ranking.length > 0) {
                     container.innerHTML = '';
-                    
+
                     data.ranking.forEach((item, index) => {
                         const itemRow = document.createElement('div');
                         itemRow.className = "flex items-center justify-between bg-white px-6 py-5 rounded-2xl shadow-sm border border-slate-100";
-                        
-                        let badgeStyle = "bg-[#E2E2E2] text-slate-500"; 
-                        if (index === 0) badgeStyle = "bg-[#EED269] text-white"; 
-                        if (index === 1) badgeStyle = "bg-[#D9D9D9] text-white"; 
-                        if (index === 2) badgeStyle = "bg-[#D78B2D] text-white"; 
+
+                        let badgeStyle = "bg-[#E2E2E2] text-slate-500";
+                        if (index === 0) badgeStyle = "bg-[#EED269] text-white";
+                        if (index === 1) badgeStyle = "bg-[#D9D9D9] text-white";
+                        if (index === 2) badgeStyle = "bg-[#D78B2D] text-white";
 
                         itemRow.innerHTML = `
                             <div class="flex items-center gap-5">
@@ -306,15 +345,24 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false }, tooltip: { enabled: true } },
                     scales: {
-                        y: { display: true, beginAtZero: true, ticks: { stepSize: 5 }, grid: { color: '#E2E8F0' } }, 
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { font: { family: 'Poppins', size: 12, weight: '500' }, color: '#1E293B' } 
+                        y: { display: true, beginAtZero: true, ticks: { stepSize: 5 }, grid: { color: '#E2E8F0' } },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Poppins', size: 12, weight: '500' }, color: '#1E293B' }
                         }
                     }
                 }
             });
         }
-</script>
+
+        function sairDaConta() {
+    if (confirm("Você tem certeza que deseja sair da conta?")) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+}
+
+    </script>
 </body>
+
 </html>
