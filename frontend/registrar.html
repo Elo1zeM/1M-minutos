@@ -69,7 +69,7 @@
         }
 
         .progress-bar-fill {
-            width: 0%; /* Começa em 0% e o JavaScript aumenta baseado no banco */
+            width: 0%; 
             height: 100%;
             background-color: #4a90e2;
             transition: width 0.5s ease;
@@ -156,7 +156,7 @@
 
     <div class="container">
         <div class="header">
-            📖 Registrar Minutos de Hoje
+            Basic📖 Registrar Minutos de Hoje
         </div>
 
         <div class="section-title">Saldo Disponível Hoje:</div>
@@ -181,121 +181,164 @@
 
         <button class="btn-submit" id="btnConfirmar">Confirmar e Somar Minutos</button>
         
-        <a href="/index.html" class="btn-back">Voltar ao Painel</a>
+        <a href="index.html" class="btn-back">Voltar ao Painel</a>
     </div>
 
-    <script>
-        const metaDiaria = 16; // Meta de exemplo com base no seu print (9 + 7)
-        let minutosSelecionados = 1;
-        const alunoRM = localStorage.getItem('aluno_rm'); 
+<script>
+    // Identificação inteligente da URL da API local ou produção
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:3000' 
+        : 'https://backmin.vercel.app';
 
-        const counterVal = document.getElementById('counterVal');
-        const btnLess = document.getElementById('btnLess');
-        const btnMore = document.getElementById('btnMore');
-        const btnConfirmar = document.getElementById('btnConfirmar');
-        const progressFill = document.getElementById('progressFill');
-        const progressTxt = document.getElementById('progressTxt');
+    const metaDiaria = 16; 
+    let minutosSelecionados = 1;
+    let minutesJaLidosHojeGlobal = 0; 
+    
+    // Busca prioritariamente o aluno_token ou o aluno_rm do localStorage
+    const alunoRM = localStorage.getItem('aluno_token') || localStorage.getItem('aluno_rm'); 
 
-        // Validação de Sessão antes de carregar
-        if (!alunoRM) {
-            alert('Sua sessão expirou. Faça login novamente.');
-            window.location.href = '/login.html';
-        }
+    const counterVal = document.getElementById('counterVal');
+    const btnLess = document.getElementById('btnLess');
+    const btnMore = document.getElementById('btnMore');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    const progressFill = document.getElementById('progressFill');
+    const progressTxt = document.getElementById('progressTxt');
 
-        // ==========================================
-        // CARREGAR DADOS DO BACKEND AO ABRIR A TELA
-        // ==========================================
-        async function buscarProgressoDiario() {
-            try {
-                // Rota do back que puxa as leituras do aluno logado
-                const response = await fetch('/api/leitura/progresso-individual', {
-                    headers: { 'Authorization': `Bearer ${alunoRM}` }
-                });
-                const dados = await response.json();
+    if (!alunoRM) {
+        alert('Sua sessão expirou. Faça login novamente.');
+        window.location.href = 'login.html';
+    }
 
-                if (dados.success) {
-                    // Soma os minutos lidos apenas na data de hoje
-                    const hojeStr = new Date().toISOString().split('T')[0];
-                    let minutosHoje = 0;
-                    
-                    if (dados.historicoSemanal) {
-                        minutosHoje = dados.historicoSemanal
-                            .filter(item => item.data_registro === hojeStr)
-                            .reduce((sum, item) => sum + item.minutos_lidos, 0);
-                    }
+    function obterLimiteRestante() {
+        return Math.max(0, metaDiaria - minutesJaLidosHojeGlobal);
+    }
 
-                    // Calcula o restante e a porcentagem da barra
-                    const faltamMinutos = Math.max(0, metaDiaria - minutosHoje);
-                    const porcentagem = Math.min(100, (minutosHoje / metaDiaria) * 100);
+    async function buscarProgressoDiario() {
+        try {
+            const response = await fetch(`${API_URL}/api/leitura/progresso-individual`, {
+                headers: { 'Authorization': `Bearer ${alunoRM}` }
+            });
+            const dados = await response.json();
 
-                    // Atualiza a barra visualmente
-                    progressFill.style.width = `${porcentagem}%`;
-                    
-                    if (faltamMinutos > 0) {
-                        progressTxt.innerText = `Você já registrou ${minutosHoje} minutos. Ainda faltam ${faltamMinutos} minutos`;
-                    } else {
-                        progressTxt.innerText = `Parabéns! Você atingiu sua meta diária de ${minutosHoje} minutos! 🎉`;
-                    }
+            if (dados.success) {
+                // Pega a data de hoje no fuso horário local correto (AAAA-MM-DD)
+                const hoje = new Date();
+                const ano = hoje.getFullYear();
+                const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                const dia = String(hoje.getDate()).padStart(2, '0');
+                const hojeStr = `${ano}-${mes}-${dia}`;
+                
+                if (dados.historicoSemanal) {
+                    minutesJaLidosHojeGlobal = dados.historicoSemanal
+                        .filter(item => {
+                            // Isola o ano-mês-dia caso o banco retorne a data com o horário (Timestamp)
+                            const dataItem = item.data_registro.split('T')[0];
+                            return dataItem === hojeStr;
+                        })
+                        .reduce((sum, item) => sum + item.minutos_lidos, 0);
                 }
-            } catch (error) {
-                console.error("Erro ao buscar progresso:", error);
-                progressTxt.innerText = "Não foi possível carregar seu saldo de minutos.";
-            }
-        }
 
-        // Executa a busca assim que a tela abre
-        buscarProgressoDiario();
+                const faltamMinutos = obterLimiteRestante();
+                const porcentagem = Math.min(100, (minutesJaLidosHojeGlobal / metaDiaria) * 100);
 
-        // ==========================================
-        // CONTADOR (+ e -)
-        // ==========================================
-        btnLess.addEventListener('click', () => {
-            if (minutosSelecionados > 1) {
-                minutosSelecionados--;
-                counterVal.innerText = `${minutosSelecionados} min`;
-            }
-        });
+                progressFill.style.width = `${porcentagem}%`;
+                
+                // Desbloqueia os botões e atualiza a interface corretamente
+                btnMore.disabled = false;
+                btnLess.disabled = false;
+                btnConfirmar.disabled = false;
+                btnConfirmar.style.backgroundColor = '#6cb2f4';
 
-        btnMore.addEventListener('click', () => {
-            minutosSelecionados++;
-            counterVal.innerText = `${minutosSelecionados} min`;
-        });
-
-        // ==========================================
-        // BOTÃO CONFIRMAR -> SALVA E VAI PRO INDEX
-        // ==========================================
-        btnConfirmar.addEventListener('click', async () => {
-            try {
-                btnConfirmar.innerText = "Salvando...";
-                btnConfirmar.disabled = true;
-
-                const response = await fetch('/api/leitura/registrar', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${alunoRM}`
-                    },
-                    body: JSON.stringify({ minutos: minutosSelecionados })
-                });
-
-                const resultado = await response.json();
-
-                if (resultado.success) {
-                    alert('Minutos somados com sucesso! Ótima leitura!');
-                    // SEU DESEJO REALIZADO: Manda direto para a página principal
-                    window.location.href = '/index.html'; 
+                if (faltamMinutos > 0) {
+                    progressTxt.innerText = `Você já registrou ${minutesJaLidosHojeGlobal} minutos. Ainda faltam ${faltamMinutos} minutos`;
+                    minutosSelecionados = 1;
+                    counterVal.innerText = `${minutosSelecionados} min`;
                 } else {
-                    alert('Erro ao registrar: ' + resultado.message);
-                    btnConfirmar.innerText = "Confirmar e Somar Minutos";
-                    btnConfirmar.disabled = false;
+                    progressTxt.innerText = `Parabéns! Você atingiu sua meta diária de ${minutesJaLidosHojeGlobal} minutos! 🎉`;
+                    minutosSelecionados = 0;
+                    counterVal.innerText = `0 min`;
+                    btnMore.disabled = true;
+                    btnLess.disabled = true;
+                    btnConfirmar.disabled = true;
+                    btnConfirmar.style.backgroundColor = '#ccc';
                 }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
-                alert('Erro ao conectar com o servidor.');
+            }
+        } catch (error) {
+            console.error("Erro ao buscar progresso:", error);
+            progressTxt.innerText = "Não foi possível carregar seu saldo de minutos.";
+            
+            btnMore.disabled = true;
+            btnLess.disabled = true;
+            btnConfirmar.disabled = true;
+            btnConfirmar.style.backgroundColor = '#ccc';
+            alert('⚠️ Erro: Não conseguimos conectar com o servidor para validar seus minutos.');
+        }
+    }
+
+    // Inicia a busca assim que o arquivo é aberto
+    buscarProgressoDiario();
+
+    btnLess.addEventListener('click', () => {
+        if (minutosSelecionados > 1) {
+            minutosSelecionados--;
+            counterVal.innerText = `${minutosSelecionados} min`;
+        }
+    });
+
+    btnMore.addEventListener('click', () => {
+        const limiteRestante = obterLimiteRestante();
+
+        if (minutosSelecionados >= limiteRestante) {
+            alert(`🦆 Limite atingido! Você só pode adicionar até ${limiteRestante} min para não estourar a meta diária.`);
+            return; 
+        }
+
+        minutosSelecionados++;
+        counterVal.innerText = `${minutosSelecionados} min`;
+    });
+
+    btnConfirmar.addEventListener('click', async () => {
+        const limiteRestante = obterLimiteRestante();
+
+        if (minutosSelecionados > limiteRestante) {
+            if (minutesJaLidosHojeGlobal >= metaDiaria) {
+                alert(`🦆 Opa! Você já completou seus ${metaDiaria} minutos de leitura recomendados para hoje.`);
+            } else {
+                alert(`🦆 Quase lá! Como você já registrou ${minutesJaLidosHojeGlobal} minutos hoje, você só pode registrar mais ${limiteRestante} minutos agora.`);
+            }
+            return; 
+        }
+
+        try {
+            btnConfirmar.innerText = "Salvando...";
+            btnConfirmar.disabled = true;
+
+            const response = await fetch(`${API_URL}/api/leitura/registrar`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${alunoRM}`
+                },
+                body: JSON.stringify({ minutos: minutosSelecionados })
+            });
+
+            const resultado = await response.json();
+
+            if (resultado.success) {
+                alert('Minutos somados com sucesso! Ótima leitura!');
+                window.location.href = 'index.html'; 
+            } else {
+                alert('Erro ao registrar: ' + resultado.message);
                 btnConfirmar.innerText = "Confirmar e Somar Minutos";
                 btnConfirmar.disabled = false;
             }
-        });
-    </script>
+        } catch (error) {
+            console.error('Erro na requisição:', error);
+            alert('Erro ao conectar com o servidor. O registro não foi salvo.');
+            btnConfirmar.innerText = "Confirmar e Somar Minutos";
+            btnConfirmar.disabled = false;
+        }
+    });
+</script>
 </body>
 </html>

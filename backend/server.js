@@ -1,4 +1,3 @@
-// Substitua o require('dotenv').config(); por isso:
 if (process.env.NODE_ENV !== 'production') {
     require('dotenv').config(); 
 }
@@ -8,8 +7,6 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const { createClient } = require('@supabase/supabase-js');
-
-// O restante do código continua exatamente igual...
 
 const app = express();
 app.use(cors());
@@ -23,7 +20,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Servir arquivos do frontend de forma estática
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Middleware para extrair o RM enviado pelo Front
+// Middleware para extrair o RM/Identificação enviado pelo Front
 function extrairRM(req, res, next) {
     const authHeader = req.headers['authorization'];
     if (authHeader) {
@@ -37,25 +34,48 @@ app.use(extrairRM);
 // ROTAS DA API
 // ==========================================
 
-// 1. Rota de Cadastro de Aluno (Para o registrar.html)
-app.post('/api/auth/registrar', async (req, res) => {
-    const { rm, nome, email, senha, turma_id } = req.body;
+// 1. Rota de Cadastro de Aluno (Para o cadastro.html)
+app.post('/api/auth/register', async (req, res) => {
+    const { nome, rm, senha, estado, unidade, turma } = req.body;
+    
     try {
+        if (!nome || !rm || !senha || !estado || !unidade || !turma) {
+            return res.status(400).json({ success: false, message: 'Por favor, preencha todos os campos obrigatórios.' });
+        }
+
         // Criptografa a senha antes de salvar
         const senha_hash = await bcrypt.hash(senha, 10);
 
+        // Regra para e-mail obrigatório
+        const emailFinal = rm.includes('@') ? rm : `${rm}@sesisenai.br`;
+
+        // Insere na tabela 'alunos' usando os novos campos diretos de texto
         const { data, error } = await supabase
             .from('alunos')
-            .insert([{ rm, nome, email, senha_hash, turma_id }]);
+            .insert([{ 
+                rm: rm, 
+                nome: nome, 
+                email: emailFinal, 
+                senha_hash: senha_hash, 
+                estado: estado, 
+                unidade: unidade, 
+                turma: turma 
+            }]);
 
-        if (error) throw error;
+        if (error) {
+            if (error.code === '23505') {
+                return res.status(400).json({ success: false, message: 'Este RM ou E-mail já está cadastrado.' });
+            }
+            throw error;
+        }
+
         res.json({ success: true, message: 'Aluno cadastrado com sucesso!' });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
     }
 });
 
-// 2. Perfil do Aluno
+// 2. Perfil do Aluno (Puxa direto da tabela alunos)
 app.get('/api/aluno/perfil', async (req, res) => {
     const rm = req.aluno_rm;
     if (!rm) return res.status(401).json({ success: false, message: 'Não autenticado' });
@@ -63,23 +83,23 @@ app.get('/api/aluno/perfil', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('alunos')
-            .select('rm, nome, email, turmas(nome, unidade_escolar)')
+            .select('rm, nome, email, unidade, turma, estado')
             .eq('rm', rm)
             .single();
 
-        if (error) throw error;
+        if (error || !data) throw error || new Error('Aluno não encontrado');
         
-        // Formata para o seu front receber estruturado
         res.json({
             success: true,
             aluno: {
                 nome: data.nome,
-                unidade_escolar: data.turmas?.unidade_escolar || 'Não informada',
-                turma: data.turmas?.nome || 'Sem Turma'
+                unidade_escolar: data.unidade || 'Não informada',
+                turma: data.turma || 'Sem Turma',
+                estado: data.estado
             }
         });
     } catch (error) {
-        res.status(404).json({ success: false, error: 'Aluno não encontrado' });
+        res.status(404).json({ success: false, error: error.message });
     }
 });
 
@@ -92,7 +112,7 @@ app.get('/api/leitura/total-escola', async (req, res) => {
 
         if (error) throw error;
 
-        const totalMinutosEscola = data.reduce((sum, item) => sum + item.minutos_lidos, 0);
+        const totalMinutosEscola = data ? data.reduce((sum, item) => sum + item.minutos_lidos, 0) : 0;
         const metaEscola = 1000000;
         const porcentagem = ((totalMinutosEscola / metaEscola) * 100).toFixed(1);
 
@@ -107,9 +127,11 @@ app.get('/api/leitura/total-escola', async (req, res) => {
     }
 });
 
-// 4. Progresso Individual e Histórico (Gráfico)
+// 4. Progresso Individual e Histórico
 app.get('/api/leitura/progresso-individual', async (req, res) => {
     const rm = req.aluno_rm;
+    if (!rm) return res.status(401).json({ success: false, message: 'Não autenticado' });
+
     try {
         const { data, error } = await supabase
             .from('historico_leitura')
@@ -119,35 +141,56 @@ app.get('/api/leitura/progresso-individual', async (req, res) => {
 
         if (error) throw error;
 
-        const totalHistorico = data.reduce((sum, item) => sum + item.minutos_lidos, 0);
+        const totalHistorico = data ? data.reduce((sum, item) => sum + item.minutos_lidos, 0) : 0;
 
         res.json({
             success: true,
             totalHistorico: totalHistorico,
-            ofensiva: 5, // Pode ser calculado baseado nos dias consecutivos depois
-            historicoSemanal: data
+            ofensiva: data && data.length > 0 ? 5 : 0, 
+            historicoSemanal: data || []
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// 5. Ranking das Turmas (Agrupado e ordenado)
+// 5. Ranking das Turmas (Corrigido para buscar sem depender de relacionamentos rígidos)
 app.get('/api/leitura/ranking-turmas', async (req, res) => {
     try {
-        // Puxa as leituras trazendo o nome da turma vinculada ao aluno
-        const { data, error } = await supabase
+        // 1. Puxa todo o histórico de minutos lidos
+        const { data: historicos, error: errorHistorico } = await supabase
             .from('historico_leitura')
-            .select('minutos_lidos, alunos(turmas(nome))');
+            .select('aluno_rm, minutos_lidos');
 
-        if (error) throw error;
+        if (errorHistorico) throw errorHistorico;
 
+        // 2. Puxa todos os alunos para sabermos de qual turma eles são
+        const { data: alunos, error: errorAlunos } = await supabase
+            .from('alunos')
+            .select('rm, turma');
+
+        if (errorAlunos) throw errorAlunos;
+
+        // 3. Cria um mapa para encontrar a turma do aluno rapidamente pelo RM
+        const mapaAlunosTurma = {};
+        if (alunos) {
+            alunos.forEach(aluno => {
+                mapaAlunosTurma[aluno.rm] = aluno.turma || 'Outros';
+            });
+        }
+
+        // 4. Agrupa e soma os minutos por turma de forma manual e segura
         const agrupadoPorTurma = {};
-        data.forEach(item => {
-            const nomeTurma = item.alunos?.turmas?.nome || 'Outros';
-            agrupadoPorTurma[nomeTurma] = (agrupadoPorTurma[nomeTurma] || 0) + item.minutos_lidos;
-        });
+        
+        if (historicos) {
+            historicos.forEach(item => {
+                // Descobre a turma do aluno usando o RM dele
+                const nomeTurma = mapaAlunosTurma[item.aluno_rm] || 'Outros';
+                agrupadoPorTurma[nomeTurma] = (agrupadoPorTurma[nomeTurma] || 0) + item.minutos_lidos;
+            });
+        }
 
+        // 5. Transforma em array e ordena do maior para o menor
         const ranking = Object.keys(agrupadoPorTurma).map(turma => ({
             turma: turma,
             total_minutos: agrupadoPorTurma[turma]
@@ -163,7 +206,7 @@ app.get('/api/leitura/ranking-turmas', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     const { rm, senha } = req.body;
     try {
-        // Busca o aluno pelo RM no Supabase
+        // Busca o aluno permitindo autenticação pelo campo RM (que guarda email ou rm)
         const { data: aluno, error } = await supabase
             .from('alunos')
             .select('*')
@@ -174,13 +217,11 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ success: false, message: 'RM ou senha incorretos!' });
         }
 
-        // Compara a senha digitada com o hash salvo no banco
         const senhaValida = await bcrypt.compare(senha, aluno.senha_hash);
         if (!senhaValida) {
             return res.status(400).json({ success: false, message: 'RM ou senha incorretos!' });
         }
 
-        // Login bem-sucedido! Retorna o RM para o frontend salvar
         res.json({ 
             success: true, 
             message: 'Login realizado com sucesso!',
@@ -191,10 +232,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// 7. Rota para Registrar Minutos Lidos (Para o registrar.html)
+// 7. Rota para Registrar Minutos Lidos (Tratamento de Erros Otimizado)
 app.post('/api/leitura/registrar', async (req, res) => {
     const { minutos } = req.body;
-    const rm = req.aluno_rm; // Pega o RM de quem está logado automaticamente
+    const rm = req.aluno_rm; 
 
     if (!rm) return res.status(401).json({ success: false, message: 'Não autenticado' });
     if (!minutos || minutos <= 0) return res.status(400).json({ success: false, message: 'Quantidade de minutos inválida' });
@@ -202,21 +243,22 @@ app.post('/api/leitura/registrar', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('historico_leitura')
-            .insert([{ aluno_rm: rm, minutos_lidos: minutos }]);
+            .insert([{ aluno_rm: rm, minutos_lidos: parseInt(minutos) }]);
 
         if (error) throw error;
 
         res.json({ success: true, message: 'Minutos registrados com sucesso!' });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        // Retorna message explicitamente para o front-end não exibir 'undefined'
+        res.status(500).json({ success: false, message: error.message || 'Erro interno no banco de dados.' });
     }
 });
 
-// Servir arquivos do frontend de forma estática (garantindo o caminho absoluto)
+// Servir arquivos de forma estática garantindo caminho absoluto
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
-// Rota padrão para entregar o HTML principal caso acessem rotas indefinidas
-app.get('*', (req, res) => {
+// Rota padrão compatível com as regras rígidas do Express 5 / path-to-regexp
+app.get(/^.*$/, (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 

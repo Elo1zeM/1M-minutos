@@ -28,7 +28,7 @@
 </head>
 <body class="bg-[#F8F9FA] text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <header class="bg-gradient-to-r from-[#2C558A] to-[#5BA3F6] border-t-[8px] border-[#282D35] w-full py-7 text-center text-white shadow-md">
+   <header class="bg-gradient-to-r from-[#2C558A] to-[#5BA3F6] w-full py-7 text-center text-white shadow-md">
         <h2 class="text-[13px] md:text-sm font-semibold tracking-[0.25em] text-blue-100 uppercase mb-2">
             Integração Sesi-Senai
         </h2>
@@ -137,12 +137,21 @@
         </section>
 
     </div>
+<script>
+        // Identificação inteligente para rodar local (localhost) ou na nuvem (Vercel)
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:3000/api' 
+            : 'https://backmin.vercel.app/api';
 
-    <!-- ================= SCRIPT COM AS ENTIDADES ================= -->
-    <script>
-        const API_URL = 'https://backmin.vercel.app/api';
-        const ALUNO_RM = localStorage.getItem('aluno_rm') || '123456'; 
+        // Puxa o token correto salvo pelo seu login.html
+        const ALUNO_RM = localStorage.getItem('aluno_token') || localStorage.getItem('aluno_rm'); 
         let chartInstance = null;
+
+        // Se o aluno não tiver um token/RM salvo, manda de volta para o login por segurança
+        if (!ALUNO_RM) {
+            alert('Sessão expirada. Por favor, faça login novamente.');
+            window.location.href = 'login.html';
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             carregarPerfilAluno();
@@ -160,6 +169,10 @@
 
                 if (data.success) {
                     document.getElementById('aluno-nome').innerText = data.aluno.nome;
+                    // Remove o hidden da linha de informações se quiser exibir a turma e unidade
+                    const infoUnidade = document.getElementById('aluno-unidade').parentElement;
+                    if (infoUnidade) infoUnidade.classList.remove('hidden');
+                    
                     document.getElementById('aluno-unidade').innerText = data.aluno.unidade_escolar || 'SESI';
                     document.getElementById('aluno-turma').innerText = data.aluno.turma;
                 }
@@ -197,26 +210,39 @@
 
                 if (data.success) {
                     document.getElementById('user-total-badge').innerText = `${data.totalHistorico} min`;
-                    document.getElementById('chart-total-minutes').innerText = `${data.totalHistorico} min lidos nesta semana`;
+                    document.getElementById('chart-total-minutes').innerText = `${data.totalHistorico} min lidos acumulados`;
                     document.getElementById('user-streak-badge').innerText = `${data.ofensiva || 0} dias`;
 
-                    // Removemos o mock. Agora valida se tem dados reais do backend
                     if (data.historicoSemanal && data.historicoSemanal.length > 0) {
-                        const labels = data.historicoSemanal.map(r => {
-                            const partes = r.data_registro.split('-');
-                            return `${partes[2]}/${partes[1]}`; 
+                        // Mapeia os dias para preencher o histórico de forma organizada
+                        const minutosPorDia = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0, 'Sáb': 0, 'Dom': 0 };
+                        const diasSemanaMapa = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+                        data.historicoSemanal.forEach(item => {
+                            if (!item.data_registro) return;
+                            const dataPura = item.data_registro.split('T')[0];
+                            const [ano, mes, dia] = dataPura.split('-');
+                            const dataObjeto = new Date(ano, mes - 1, dia);
+                            const diaSemanaTexto = diasSemanaMapa[dataObjeto.getDay()];
+                            
+                            if (minutosPorDia[diaSemanaTexto] !== undefined) {
+                                minutosPorDia[diaSemanaTexto] += item.minutos_lidos;
+                            }
                         });
-                        const valores = data.historicoSemanal.map(r => r.minutos_lidos);
+
+                        const labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+                        const valores = labels.map(dia => minutosPorDia[dia]);
+
                         renderizarGrafico(labels, valores);
                     } else {
                         document.getElementById('chart-total-minutes').innerText = 'Nenhuma leitura registrada ainda.';
-                        renderizarGrafico([], []); // Gráfico vazio
+                        renderizarGrafico(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], [0, 0, 0, 0, 0, 0, 0]); 
                     }
                 }
             } catch (error) {
                 console.error("Erro ao puxar dados logs_leitura:", error);
                 document.getElementById('chart-total-minutes').innerText = 'Aguardando dados...';
-                renderizarGrafico([], []); // Deixa em branco aguardando backend
+                renderizarGrafico(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], [0, 0, 0, 0, 0, 0, 0]);
             }
         }
 
@@ -225,6 +251,7 @@
                 const response = await fetch(`${API_URL}/leitura/ranking-turmas`);
                 const data = await response.json();
 
+                // Corrigido para buscar o ID correto 'ranking-container' que está no seu HTML
                 const container = document.getElementById('ranking-container');
 
                 if (data.success && data.ranking && data.ranking.length > 0) {
@@ -232,7 +259,7 @@
                     
                     data.ranking.forEach((item, index) => {
                         const itemRow = document.createElement('div');
-                        itemRow.className = "flex items-center justify-between bg-white px-6 py-5 rounded-2xl shadow-sm";
+                        itemRow.className = "flex items-center justify-between bg-white px-6 py-5 rounded-2xl shadow-sm border border-slate-100";
                         
                         let badgeStyle = "bg-[#E2E2E2] text-slate-500"; 
                         if (index === 0) badgeStyle = "bg-[#EED269] text-white"; 
@@ -273,8 +300,8 @@
                     datasets: [{
                         data: valores,
                         backgroundColor: backgroundColors,
-                        borderRadius: 2,
-                        barThickness: 35
+                        borderRadius: 6,
+                        barThickness: 28
                     }]
                 },
                 options: {
@@ -282,9 +309,9 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false }, tooltip: { enabled: true } },
                     scales: {
-                        y: { display: false, beginAtZero: true, suggestedMax: 10 }, 
+                        y: { display: true, beginAtZero: true, ticks: { stepSize: 5 }, grid: { color: '#E2E8F0' } }, 
                         x: { 
-                            grid: { display: false, drawBorder: false }, 
+                            grid: { display: false }, 
                             ticks: { font: { family: 'Poppins', size: 12, weight: '500' }, color: '#1E293B' } 
                         }
                     }
