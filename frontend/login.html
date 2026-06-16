@@ -50,13 +50,348 @@
                         class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 placeholder-gray-400 shadow-sm" required>
                 </div>
 
-                <div>
-                    <label for="login-unidade" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
-                        Unidade Escolar
-                    </label>
-                    <input type="text" id="login-unidade" placeholder="Qual a sua escola?" 
-                        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 placeholder-gray-400 shadow-sm" required>
-                </div>
+      <div>
+    <label for="login-estado" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
+        Estado (UF)
+    </label>
+    <select id="login-estado" onchange="atualizarUnidades()"
+        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 shadow-sm appearance-none cursor-pointer" required>
+        <option value="" disabled selected class="text-gray-400">Selecione seu estado...</option>
+        
+        <optgroup label="Sudeste">
+            <option value="SP">São Paulo</option>
+            <option value="RJ">Rio de Janeiro</option>
+            <option value="MG">Minas Gerais</option>
+            <option value="ES">Espírito Santo</option>
+        </optgroup>
+        <optgroup label="Sul">
+            <option value="PR">Paraná</option>
+            <option value="SC">Santa Catarina</option>
+            <option value="RS">Rio Grande do Sul</option>
+        </optgroup>
+        <optgroup label="Centro-Oeste">
+            <option value="DF">Distrito Federal</option>
+            <option value="GO">Goiás</option>
+            <option value="MT">Mato Grosso</option>
+            <option value="MS">Mato Grosso do Sul</option>
+        </optgroup>
+        <optgroup label="Nordeste">
+            <option value="AL">Alagoas</option>
+            <option value="BA">Bahia</option>
+            <option value="CE">Ceará</option>
+            <option value="MA">Maranhão</option>
+            <option value="PB">Paraíba</option>
+            <option value="PE">Pernambuco</option>
+            <option value="PI">Piauí</option>
+            <option value="RN">Rio Grande do Norte</option>
+            <option value="SE">Sergipe</option>
+        </optgroup>
+        <optgroup label="Norte">
+            <option value="AC">Acre</option>
+            <option value="AM">Amazonas</option>
+            <option value="AP">Amapá</option>
+            <option value="PA">Pará</option>
+            <option value="RO">Rondônia</option>
+            <option value="RR">Roraima</option>
+            <option value="TO">Tocantins</option>
+        </optgroup>
+    </select>
+</div>
+
+<div class="mt-4">
+    <label for="login-unidade" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
+        Unidade Escolar
+    </label>
+    <select id="login-unidade" 
+        class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all bg-gray-50/50 text-gray-700 shadow-sm appearance-none cursor-pointer" required disabled>
+        <option value="" disabled selected class="text-gray-400">Selecione o estado primeiro...</option>
+    </select>
+</div>
+
+<script>
+const unidadesPorEstado = {
+    "SP": `
+        
+        <optgroup label="SESI - São Paulo">
+            <option value="SESI Sorocaba">SESI Sorocaba</option>
+            <option value="SESI Campinas">SESI Campinas</option>
+            <option value="SESI Jundiaí">SESI Jundiaí</option>
+            <option value="SESI Bauru">SESI Bauru</option>
+            <option value="SESI Vila Leopoldina">SESI Vila Leopoldina (Capital)</option>
+            <option value="SESI Itu">SESI Itu</option>
+            <option value="SESI Boituva">SESI Boituva</option>
+        </optgroup>
+        <optgroup label="SENAI - São Paulo">
+            <option value="SENAI Sorocaba">SENAI Sorocaba</option>
+            <option value="SENAI Roberto Mange (Campinas)">SENAI Campinas</option>
+            <option value="SENAI Nadir Dias de Figueiredo (Osasco)">SENAI Osasco</option>
+            <option value="SENAI Ítalo Bologna (Itu)">SENAI Itu</option>
+        </optgroup>
+    `,
+    "RJ": `
+        <optgroup label="SESI - Rio de Janeiro">
+            <option value="SESI Maracanã">SESI Maracanã</option>
+            <option value="SESI Jacarepaguá">SESI Jacarepaguá</option>
+            <option value="SESI Caxias">SESI Caxias</option>
+        </optgroup>
+        <optgroup label="SENAI - Rio de Janeiro">
+            <option value="SENAI Maracanã">SENAI Maracanã</option>
+            <option value="SENAI Laranjeiras">SENAI Laranjeiras</option>
+            <option value="SENAI Resende">SENAI Resende</option>
+        </optgroup>
+    `,
+    "MG": `
+        <optgroup label="SESI - Minas Gerais">
+            <option value="SESI Belo Horizonte">SESI Belo Horizonte</option>
+            <option value="SESI Contagem">SESI Contagem</option>
+            <option value="SESI Uberlândia">SESI Uberlândia</option>
+        </optgroup>
+        <optgroup label="SENAI - Minas Gerais">
+            <option value="SENAI CFP Américo Renê Giannetti">SENAI Belo Horizonte</option>
+            <option value="SENAI FIEMG Contagem">SENAI Contagem</option>
+            <option value="SENAI Uberaba">SENAI Uberaba</option>
+        </optgroup>
+    `,
+    "ES": `
+        <optgroup label="SESI - Espírito Santo">
+            <option value="SESI Vitória">SESI Vitória</option>
+            <option value="SESI Vila Velha">SESI Vila Velha</option>
+        </optgroup>
+        <optgroup label="SENAI - Espírito Santo">
+            <option value="SENAI Vitória">SENAI Vitória</option>
+            <option value="SENAI Serra">SENAI Serra</option>
+        </optgroup>
+    `,
+    "PR": `
+        <optgroup label="SESI - Paraná">
+            <option value="SESI Curitiba">SESI Curitiba</option>
+            <option value="SESI Londrina">SESI Londrina</option>
+            <option value="SESI Maringá">SESI Maringá</option>
+        </optgroup>
+        <optgroup label="SENAI - Paraná">
+            <option value="SENAI CIC Curitiba">SENAI Curitiba</option>
+            <option value="SENAI Londrina">SENAI Londrina</option>
+        </optgroup>
+    `,
+    "SC": `
+        <optgroup label="SESI - Santa Catarina">
+            <option value="SESI Florianópolis">SESI Florianópolis</option>
+            <option value="SESI Joinville">SESI Joinville</option>
+            <option value="SESI Blumenau">SESI Blumenau</option>
+        </optgroup>
+        <optgroup label="SENAI - Santa Catarina">
+            <option value="SENAI Florianópolis">SENAI Florianópolis</option>
+            <option value="SENAI Joinville">SENAI Joinville</option>
+        </optgroup>
+    `,
+    "RS": `
+        <optgroup label="SESI - Rio Grande do Sul">
+            <option value="SESI Porto Alegre">SESI Porto Alegre</option>
+            <option value="SESI Caxias do Sul">SESI Caxias do Sul</option>
+            <option value="SESI Pelotas">SESI Pelotas</option>
+        </optgroup>
+        <optgroup label="SENAI - Rio Grande do Sul">
+            <option value="SENAI Porto Alegre">SENAI Porto Alegre</option>
+            <option value="SENAI FIERGS">SENAI FIERGS</option>
+        </optgroup>
+    `,
+    "DF": `
+        <optgroup label="SESI - Distrito Federal">
+            <option value="SESI Brasília (SIA)">SESI Brasília (SIA)</option>
+            <option value="SESI Taguatinga">SESI Taguatinga</option>
+            <option value="SESI Gama">SESI Gama</option>
+        </optgroup>
+        <optgroup label="SENAI - Distrito Federal">
+            <option value="SENAI Taguatinga">SENAI Taguatinga</option>
+            <option value="SENAI Gama">SENAI Gama</option>
+        </optgroup>
+    `,
+    "GO": `
+        <optgroup label="SESI - Goiás">
+            <option value="SESI Goiânia">SESI Goiânia</option>
+            <option value="SESI Anápolis">SESI Anápolis</option>
+        </optgroup>
+        <optgroup label="SENAI - Goiás">
+            <option value="SENAI Goiânia">SENAI Goiânia</option>
+            <option value="SENAI FATEG Anápolis">SENAI Anápolis</option>
+        </optgroup>
+    `,
+    "MT": `
+        <optgroup label="SESI - Mato Grosso">
+            <option value="SESI Cuiabá">SESI Cuiabá</option>
+            <option value="SESI Rondonópolis">SESI Rondonópolis</option>
+        </optgroup>
+        <optgroup label="SENAI - Mato Grosso">
+            <option value="SENAI Cuiabá">SENAI Cuiabá</option>
+            <option value="SENAI Várzea Grande">SENAI Várzea Grande</option>
+        </optgroup>
+    `,
+    "MS": `
+        <optgroup label="SESI - Mato Grosso do Sul">
+            <option value="SESI Campo Grande">SESI Campo Grande</option>
+            <option value="SESI Três Lagoas">SESI Três Lagoas</option>
+        </optgroup>
+        <optgroup label="SENAI - Mato Grosso do Sul">
+            <option value="SENAI Campo Grande">SENAI Campo Grande</option>
+            <option value="SENAI Dourados">SENAI Dourados</option>
+        </optgroup>
+    `,
+    "AL": `
+        <optgroup label="SESI - Alagoas">
+            <option value="SESI Maceió">SESI Maceió</option>
+            <option value="SESI Arapiraca">SESI Arapiraca</option>
+        </optgroup>
+        <optgroup label="SENAI - Alagoas">
+            <option value="SENAI Maceió">SENAI Maceió</option>
+        </optgroup>
+    `,
+    "BA": `
+        <optgroup label="SESI - Bahia">
+            <option value="SESI Salvador (Piatã)">SESI Salvador</option>
+            <option value="SESI Feira de Santana">SESI Feira de Santana</option>
+            <option value="SESI Vitória da Conquista">SESI Vitória da Conquista</option>
+        </optgroup>
+        <optgroup label="SENAI - Bahia">
+            <option value="SENAI CIMATEC Salvador">SENAI CIMATEC Salvador</option>
+            <option value="SENAI Camaçari">SENAI Camaçari</option>
+        </optgroup>
+    `,
+    "CE": `
+        <optgroup label="SESI - Ceará">
+            <option value="SESI Fortaleza">SESI Fortaleza</option>
+            <option value="SESI Maracanaú">SESI Maracanaú</option>
+        </optgroup>
+        <optgroup label="SENAI - Ceará">
+            <option value="SENAI Jacarecanga">SENAI Jacarecanga</option>
+            <option value="SENAI Horizonte">SENAI Horizonte</option>
+        </optgroup>
+    `,
+    "MA": `
+        <optgroup label="SESI - Maranhão">
+            <option value="SESI São Luís">SESI São Luís</option>
+            <option value="SESI Imperatriz">SESI Imperatriz</option>
+        </optgroup>
+        <optgroup label="SENAI - Maranhão">
+            <option value="SENAI São Luís">SENAI São Luís</option>
+            <option value="SENAI Imperatriz">SENAI Imperatriz</option>
+        </optgroup>
+    `,
+    "PB": `
+        <optgroup label="SESI - Paraíba">
+            <option value="SESI João Pessoa">SESI João Pessoa</option>
+            <option value="SESI Campina Grande">SESI Campina Grande</option>
+        </optgroup>
+        <optgroup label="SENAI - Paraíba">
+            <option value="SENAI João Pessoa">SENAI João Pessoa</option>
+            <option value="SENAI Campina Grande">SENAI Campina Grande</option>
+        </optgroup>
+    `,
+    "PE": `
+        <optgroup label="SESI - Pernambuco">
+            <option value="SESI Recife">SESI Recife</option>
+            <option value="SESI Caruaru">SESI Caruaru</option>
+            <option value="SESI Petrolina">SESI Petrolina</option>
+        </optgroup>
+        <optgroup label="SENAI - Pernambuco">
+            <option value="SENAI Santo Amaro">SENAI Santo Amaro</option>
+            <option value="SENAI Paulista">SENAI Paulista</option>
+        </optgroup>
+    `,
+    "PI": `
+        <optgroup label="SESI - Piauí">
+            <option value="SESI Teresina">SESI Teresina</option>
+            <option value="SESI Parnaíba">SESI Parnaíba</option>
+        </optgroup>
+        <optgroup label="SENAI - Piauí">
+            <option value="SENAI Teresina">SENAI Teresina</option>
+        </optgroup>
+    `,
+    "RN": `
+        <optgroup label="SESI - Rio Grande do Norte">
+            <option value="SESI Natal">SESI Natal</option>
+            <option value="SESI Mossoró">SESI Mossoró</option>
+        </optgroup>
+        <optgroup label="SENAI - Rio Grande do Norte">
+            <option value="SENAI Natal">SENAI Natal</option>
+            <option value="SENAI Clóvis Motta">SENAI Clóvis Motta</option>
+        </optgroup>
+    `,
+    "SE": `
+        <optgroup label="SESI - Sergipe">
+            <option value="SESI Aracaju">SESI Aracaju</option>
+            <option value="SESI Nossa Senhora do Socorro">SESI Socorro</option>
+        </optgroup>
+        <optgroup label="SENAI - Sergipe">
+            <option value="SENAI Aracaju">SENAI Aracaju</option>
+        </optgroup>
+    `,
+    "AC": `
+        <optgroup label="SESI & SENAI - Acre">
+            <option value="SESI Rio Branco">SESI Rio Branco</option>
+            <option value="SENAI Rio Branco">SENAI Rio Branco</option>
+            <option value="SENAI Cruzeiro do Sul">SENAI Cruzeiro do Sul</option>
+        </optgroup>
+    `,
+    "AM": `
+        <optgroup label="SESI - Amazonas">
+            <option value="SESI Manaus">SESI Manaus</option>
+        </optgroup>
+        <optgroup label="SENAI - Amazonas">
+            <option value="SENAI Manaus (Distrito Industrial)">SENAI Manaus</option>
+        </optgroup>
+    `,
+    "AP": `
+        <optgroup label="SESI & SENAI - Amapá">
+            <option value="SESI Macapá">SESI Macapá</option>
+            <option value="SENAI Macapá">SENAI Macapá</option>
+            <option value="SENAI Santana">SENAI Santana</option>
+        </optgroup>
+    `,
+    "PA": `
+        <optgroup label="SESI - Pará">
+            <option value="SESI Belém">SESI Belém</option>
+            <option value="SESI Ananindeua">SESI Ananindeua</option>
+        </optgroup>
+        <optgroup label="SENAI - Pará">
+            <option value="SENAI Belém">SENAI Belém</option>
+            <option value="SENAI Marabá">SENAI Marabá</option>
+        </optgroup>
+    `,
+    "RO": `
+        <optgroup label="SESI & SENAI - Rondônia">
+            <option value="SESI Porto Velho">SESI Porto Velho</option>
+            <option value="SENAI Porto Velho">SENAI Porto Velho</option>
+            <option value="SENAI Ji-Paraná">SENAI Ji-Paraná</option>
+        </optgroup>
+    `,
+    "RR": `
+        <optgroup label="SESI & SENAI - Roraima">
+            <option value="SESI Boa Vista">SESI Boa Vista</option>
+            <option value="SENAI Boa Vista">SENAI Boa Vista</option>
+        </optgroup>
+    `,
+    "TO": `
+        <optgroup label="SESI & SENAI - Tocantins">
+            <option value="SESI Palmas">SESI Palmas</option>
+            <option value="SESI Araguaína">SESI Araguaína</option>
+            <option value="SENAI Palmas">SENAI Palmas</option>
+        </optgroup>
+    `
+};
+
+function atualizarUnidades() {
+    const estadoSelecionado = document.getElementById('login-estado').value;
+    const selectUnidade = document.getElementById('login-unidade');
+    
+    if (estadoSelecionado && unidadesPorEstado[estadoSelecionado]) {
+        selectUnidade.disabled = false;
+        selectUnidade.innerHTML = '<option value="" disabled selected class="text-gray-400">Selecione sua unidade...</option>' + unidadesPorEstado[estadoSelecionado];
+    } else {
+        selectUnidade.disabled = true;
+        selectUnidade.innerHTML = '<option value="" disabled selected class="text-gray-400">Selecione o estado primeiro...</option>';
+    }
+}
+</script>
 
                 <div>
                     <label for="login-turma" class="block text-sm font-semibold text-blue-900 mb-1.5 ml-1">
@@ -87,8 +422,19 @@
             </form>
         </div>
 
-        <div class="hidden md:flex flex-col items-center w-64 lg:w-80 transition-transform duration-500 hover:-translate-y-3 cursor-pointer">
-            <img src="https://via.placeholder.com/300x350.png?text=Coloque+a+imagem+do+Pato+Aqui" alt="Mascote Pato Lendo" class="w-full object-contain drop-shadow-2xl">
+        <div class="hidden md:flex flex-col items-center w-64 lg:w-80 transition-transform duration-500 hover:-translate-y-3">
+            <svg viewBox="0 0 200 200" class="w-full drop-shadow-2xl">
+                <circle cx="100" cy="80" r="45" fill="#FFEB3B"/>
+                <path d="M55,115 C55,75 145,75 145,115 C145,155 55,155 55,115 Z" fill="#FFEB3B"/>
+                <circle cx="115" cy="70" r="6" fill="#212121"/>
+                <path d="M135,75 C150,75 160,83 135,90 Z" fill="#FF9800"/>
+                <circle cx="115" cy="70" r="14" fill="none" stroke="#212121" stroke-width="4"/>
+                <line x1="101" y1="70" x2="85" y2="70" stroke="#212121" stroke-width="4"/>
+                <path d="M75,115 C75,100 110,100 105,125 Z" fill="#FDD835"/>
+                <polygon points="65,45 135,45 100,25" fill="#1E88E5"/>
+                <rect x="92" y="45" width="16" height="10" fill="#1565C0"/>
+            </svg>
+            <span class="mt-4 font-bold text-[#2C558A] text-lg bg-white/60 px-4 py-1.5 rounded-full border border-blue-100">Olá, Estudante! 👋</span>
         </div>
 
     </main>
@@ -99,42 +445,42 @@
         async function fazerLogin() {
             const identificacao = document.getElementById('login-identificacao').value.trim();
             const senha = document.getElementById('login-senha').value.trim();
+            const unidade = document.getElementById('login-unidade').value;
+            const turma = document.getElementById('login-turma').value.trim();
             
             const alertDiv = document.getElementById('login-alert');
             const alertText = document.getElementById('alert-text');
 
             alertDiv.classList.add('hidden');
 
-            if (!identificacao || !senha) {
+            if (!identificacao || !senha || !unidade || !turma) {
                 alertText.innerText = "Por favor, preencha todos os campos obrigatórios.";
                 alertDiv.classList.remove('hidden');
                 
-                // Adiciona um pequeno efeito de tremor no alerta
                 alertDiv.classList.add('animate-bounce');
                 setTimeout(() => alertDiv.classList.remove('animate-bounce'), 1000);
                 return;
             }
 
             try {
-                // Modifique o botão durante o carregamento para feedback visual
                 const btnSubmit = document.querySelector('button[type="submit"]');
-                const btnOriginalText = btnSubmit.innerText;
                 btnSubmit.innerText = "CARREGANDO...";
                 btnSubmit.classList.add('opacity-80', 'cursor-not-allowed');
 
-                /* * ESPAÇO RESERVADO PARA A SUA API AQUI (Descomente quando o backend suportar senha)
-                 * const response = await fetch(`${API_URL}/login`, { 
+                // Salva o RM no localStorage para a página registrar.html poder ler depois
+                localStorage.setItem('aluno_rm', identificacao);
+
+                /* Descomente quando a API estiver 100% integrada
+                const response = await fetch(`${API_URL}/login`, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ rm: identificacao, senha: senha })
+                    body: JSON.stringify({ rm: identificacao, senha: senha, unidade: unidade, turma: turma })
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Credenciais inválidas.');
                 localStorage.setItem('aluno_token', result.token);
-                // ... outros sets ...
                 */
 
-                // Simulação de tempo de rede para ver o botão "Carregando..." (pode apagar depois)
                 setTimeout(() => {
                     window.location.href = 'index.html';
                 }, 800);
@@ -143,7 +489,6 @@
                 alertText.innerText = error.message;
                 alertDiv.classList.remove('hidden');
                 
-                // Restaura o botão em caso de erro
                 const btnSubmit = document.querySelector('button[type="submit"]');
                 btnSubmit.innerText = "ENTRAR NA CONTA";
                 btnSubmit.classList.remove('opacity-80', 'cursor-not-allowed');
@@ -151,6 +496,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
+            // Se o aluno já estiver logado, joga pro painel direto
             if (localStorage.getItem('aluno_token')) {
                 window.location.href = 'index.html';
             }
