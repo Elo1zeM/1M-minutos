@@ -159,6 +159,59 @@ app.get('/api/leitura/ranking-turmas', async (req, res) => {
     }
 });
 
+// 6. Rota de Login (Para o login.html)
+app.post('/api/auth/login', async (req, res) => {
+    const { rm, senha } = req.body;
+    try {
+        // Busca o aluno pelo RM no Supabase
+        const { data: aluno, error } = await supabase
+            .from('alunos')
+            .select('*')
+            .eq('rm', rm)
+            .single();
+
+        if (error || !aluno) {
+            return res.status(400).json({ success: false, message: 'RM ou senha incorretos!' });
+        }
+
+        // Compara a senha digitada com o hash salvo no banco
+        const senhaValida = await bcrypt.compare(senha, aluno.senha_hash);
+        if (!senhaValida) {
+            return res.status(400).json({ success: false, message: 'RM ou senha incorretos!' });
+        }
+
+        // Login bem-sucedido! Retorna o RM para o frontend salvar
+        res.json({ 
+            success: true, 
+            message: 'Login realizado com sucesso!',
+            aluno: { rm: aluno.rm, nome: aluno.nome }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 7. Rota para Registrar Minutos Lidos (Para o registrar.html)
+app.post('/api/leitura/registrar', async (req, res) => {
+    const { minutos } = req.body;
+    const rm = req.aluno_rm; // Pega o RM de quem está logado automaticamente
+
+    if (!rm) return res.status(401).json({ success: false, message: 'Não autenticado' });
+    if (!minutos || minutos <= 0) return res.status(400).json({ success: false, message: 'Quantidade de minutos inválida' });
+
+    try {
+        const { data, error } = await supabase
+            .from('historico_leitura')
+            .insert([{ aluno_rm: rm, minutos_lidos: minutos }]);
+
+        if (error) throw error;
+
+        res.json({ success: true, message: 'Minutos registrados com sucesso!' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Servir arquivos do frontend de forma estática (garantindo o caminho absoluto)
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
