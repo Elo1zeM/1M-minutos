@@ -74,10 +74,10 @@
     </main>
 
     <script>
-        // Correção aplicada aqui: Ajustando o caminho para conversar de forma correta com o roteamento da Vercel
+        // Configuração idêntica à do cadastro que você confirmou que funcionou
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'http://localhost:3000/api' 
-            : '/api';
+            ? 'http://localhost:3000' 
+            : ''; // Vazio para usar a mesma URL base da Vercel que deu certo no cadastro
 
         async function fazerLogin() {
             const identificacao = document.getElementById('login-identificacao').value.trim();
@@ -99,8 +99,8 @@
                 btnSubmit.innerText = "ENTRANDO...";
                 btnSubmit.disabled = true;
 
-                // Aqui enviamos para a rota unificada, permitindo o correto redirecionamento interno
-                const response = await fetch(`${API_URL}/auth/login`, { 
+                // Busca /api/auth/login direto da mesma origem que deu certo no cadastro
+                const response = await fetch(`${API_URL}/api/auth/login`, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ rm: identificacao, senha: senha })
