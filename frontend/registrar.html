@@ -185,10 +185,10 @@
     </div>
 
 <script>
-    // Identificação inteligente da URL da API local ou produção
+    // Identificação inteligente corrigida para usar o roteamento do seu vercel.json
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:3000' 
-        : 'https://backmin.vercel.app';
+        : ''; // Vazio para usar a mesma URL base da Vercel que funcionou no login e cadastro
 
     const metaDiaria = 16; 
     let minutosSelecionados = 1;
