@@ -179,8 +179,8 @@
         }
 
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'http://localhost:3000' 
-            : 'https://backmin.vercel.app';
+            ? 'http://localhost:3000/api' 
+            : '';
 
         async function fazerCadastro() {
             const nome = document.getElementById('cad-nome').value.trim();
@@ -208,7 +208,7 @@
                 btnSubmit.disabled = true;
 
                 // Envia a rota correta para o Back-end registrar o aluno
-                const response = await fetch(`${API_URL}/api/auth/register`, { 
+                const response = await fetch(`${API_URL}/auth/register`, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
