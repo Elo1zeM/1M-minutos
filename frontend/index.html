@@ -138,10 +138,10 @@
 
     </div>
 <script>
-        // Identificação inteligente para rodar local (localhost) ou na nuvem (Vercel)
+        // CONFIGURAÇÃO CORRIGIDA: Alinhada com o roteamento unificado do seu vercel.json
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:3000/api' 
-            : 'https://backmin.vercel.app/api';
+            : '/api'; // Usa a mesma URL da Vercel que deu certo no login e cadastro
 
         // Puxa o token correto salvo pelo seu login.html
         const ALUNO_RM = localStorage.getItem('aluno_token') || localStorage.getItem('aluno_rm'); 
@@ -169,7 +169,6 @@
 
                 if (data.success) {
                     document.getElementById('aluno-nome').innerText = data.aluno.nome;
-                    // Remove o hidden da linha de informações se quiser exibir a turma e unidade
                     const infoUnidade = document.getElementById('aluno-unidade').parentElement;
                     if (infoUnidade) infoUnidade.classList.remove('hidden');
                     
@@ -214,7 +213,6 @@
                     document.getElementById('user-streak-badge').innerText = `${data.ofensiva || 0} dias`;
 
                     if (data.historicoSemanal && data.historicoSemanal.length > 0) {
-                        // Mapeia os dias para preencher o histórico de forma organizada
                         const minutosPorDia = { 'Seg': 0, 'Ter': 0, 'Qua': 0, 'Qui': 0, 'Sex': 0, 'Sáb': 0, 'Dom': 0 };
                         const diasSemanaMapa = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -251,7 +249,6 @@
                 const response = await fetch(`${API_URL}/leitura/ranking-turmas`);
                 const data = await response.json();
 
-                // Corrigido para buscar o ID correto 'ranking-container' que está no seu HTML
                 const container = document.getElementById('ranking-container');
 
                 if (data.success && data.ranking && data.ranking.length > 0) {
@@ -318,6 +315,6 @@
                 }
             });
         }
-    </script>
+</script>
 </body>
 </html>
