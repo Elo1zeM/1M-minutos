@@ -215,42 +215,51 @@ app.get('/api/leitura/ranking-turmas', async (req, res) => {
     }
 });
 
-// 5. Rota para obter Ranking de Turmas (Correção de Vínculo entre Tabelas)
+// 5. Rota para obter Ranking de Turmas (Com diagnóstico de colunas)
 app.get('/api/leitura/ranking-turmas', async (req, res) => {
     try {
         // 1. Puxa todo o histórico de leitura
         const { data: historicos, error: errHist } = await supabase
             .from('historico_leitura')
-            .select('aluno_rm, minutos_lidos');
+            .select('*'); // Puxa tudo para não errarmos o nome da coluna
 
         if (errHist) throw errHist;
 
-        // 2. Puxa a lista completa de alunos para cruzar as informações
+        // 2. Puxa a lista completa de alunos
         const { data: alunos, error: errAlunos } = await supabase
             .from('alunos')
-            .select('rm, turma, unidade_escolar, estado');
+            .select('*'); // Puxa tudo para não errarmos o nome da coluna
 
         if (errAlunos) throw errAlunos;
 
-        // Cria um mapa de alunos usando o RM como chave rápida de busca
+        // ================= DIAGNÓSTICO NO TERMINAL DA VERCEL =================
+        console.log("=== DIAGNÓSTICO DE DADOS ===");
+        console.log("Primeiro registro do histórico:", historicos[0]);
+        console.log("Primeiro registro de alunos:", alunos[0]);
+        // =====================================================================
+
+        // Cria um mapa de alunos testando variações comuns de coluna (rm, RM, id)
         const mapaAlunos = {};
         alunos.forEach(aluno => {
-            mapaAlunos[aluno.rm] = aluno;
+            const rmChave = aluno.rm || aluno.RM || aluno.id;
+            if (rmChave) {
+                mapaAlunos[rmChave] = aluno;
+            }
         });
 
-        // 3. Agrupa as leituras combinando Turma + Unidade + Estado
         const agrupado = {};
         
         historicos.forEach(item => {
-            // Encontra o aluno dono desse registro de leitura
-            const aluno = mapaAlunos[item.aluno_rm];
+            // Tenta adivinhar qual coluna guarda o RM do aluno no histórico de leitura
+            const rmDoHistorico = item.aluno_rm || item.rm_aluno || item.aluno_id || item.rm || item.RM;
+            const aluno = mapaAlunos[rmDoHistorico];
             
             if (aluno) {
-                const turmaNome = aluno.turma || 'Sem Turma';
-                const unidade = aluno.unidade_escolar || 'SESI';
-                const estado = aluno.estado || 'SP';
+                const turmaNome = aluno.turma || aluno.Turma || 'Sem Turma';
+                const unidade = aluno.unidade_escolar || aluno.unidade || 'SESI';
+                const estado = aluno.estado || aluno.uf || 'SP';
+                const minutos = item.minutos_lidos || item.minutos || 0;
                 
-                // Cria a chave para diferenciar as escolas
                 const chaveUnica = `${turmaNome}|${unidade}|${estado}`;
 
                 if (!agrupado[chaveUnica]) {
@@ -261,17 +270,16 @@ app.get('/api/leitura/ranking-turmas', async (req, res) => {
                         total_minutos: 0
                     };
                 }
-                agrupado[chaveUnica].total_minutos += item.minutos_lidos;
+                agrupado[chaveUnica].total_minutos += minutos;
             }
         });
 
-        // 4. Transforma em lista e ordena do maior para o menor
         const rankingOrdenado = Object.values(agrupado)
             .sort((a, b) => b.total_minutos - a.total_minutos);
 
         res.json({ success: true, ranking: rankingOrdenado });
     } catch (error) {
-        console.error("Erro na rota de ranking:", error);
+        console.error("Erro crítico na rota de ranking:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
