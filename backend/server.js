@@ -154,49 +154,52 @@ app.get('/api/leitura/progresso-individual', async (req, res) => {
     }
 });
 
-// 5. Ranking das Turmas (Corrigido para buscar sem depender de relacionamentos rígidos)
+// 5. Rota para obter Ranking de Turmas (Atualizada para trazer Unidade, Cidade e Estado)
 app.get('/api/leitura/ranking-turmas', async (req, res) => {
     try {
-        // 1. Puxa todo o histórico de minutos lidos
-        const { data: historicos, error: errorHistorico } = await supabase
+        // Busca o histórico trazendo os dados do aluno acoplados
+        const { data, error } = await supabase
             .from('historico_leitura')
-            .select('aluno_rm, minutos_lidos');
+            .select(`
+                minutos_lidos,
+                alunos (
+                    turma,
+                    unidade_escolar,
+                    estado
+                )
+            `);
 
-        if (errorHistorico) throw errorHistorico;
+        if (error) throw error;
 
-        // 2. Puxa todos os alunos para sabermos de qual turma eles são
-        const { data: alunos, error: errorAlunos } = await supabase
-            .from('alunos')
-            .select('rm, turma');
-
-        if (errorAlunos) throw errorAlunos;
-
-        // 3. Cria um mapa para encontrar a turma do aluno rapidamente pelo RM
-        const mapaAlunosTurma = {};
-        if (alunos) {
-            alunos.forEach(aluno => {
-                mapaAlunosTurma[aluno.rm] = aluno.turma || 'Outros';
-            });
-        }
-
-        // 4. Agrupa e soma os minutos por turma de forma manual e segura
-        const agrupadoPorTurma = {};
+        // Agrupa as leituras combinando Turma + Unidade + Estado para diferenciar escolas com turmas iguais
+        const agrupado = {};
         
-        if (historicos) {
-            historicos.forEach(item => {
-                // Descobre a turma do aluno usando o RM dele
-                const nomeTurma = mapaAlunosTurma[item.aluno_rm] || 'Outros';
-                agrupadoPorTurma[nomeTurma] = (agrupadoPorTurma[nomeTurma] || 0) + item.minutos_lidos;
-            });
-        }
+        data.forEach(item => {
+            if (item.alunos) {
+                const turmaNome = item.alunos.turma || 'Sem Turma';
+                const unidade = item.alunos.unidade_escolar || 'SESI';
+                const estado = item.alunos.estado || 'SP';
+                
+                // Cria uma chave única combinando os dados da escola
+                const chaveUnica = `${turmaNome}|${unidade}|${estado}`;
 
-        // 5. Transforma em array e ordena do maior para o menor
-        const ranking = Object.keys(agrupadoPorTurma).map(turma => ({
-            turma: turma,
-            total_minutos: agrupadoPorTurma[turma]
-        })).sort((a, b) => b.total_minutos - a.total_minutos);
+                if (!agrupado[chaveUnica]) {
+                    agrupado[chaveUnica] = {
+                        turma: turmaNome,
+                        unidade_escolar: unidade,
+                        estado: estado,
+                        total_minutos: 0
+                    };
+                }
+                agrupado[chaveUnica].total_minutos += item.minutos_lidos;
+            }
+        });
 
-        res.json({ success: true, ranking });
+        // Transforma o objeto em uma lista e ordena do maior para o menor número de minutos lidos
+        const rankingOrdenado = Object.values(agrupado)
+            .sort((a, b) => b.total_minutos - a.total_minutos);
+
+        res.json({ success: true, ranking: rankingOrdenado });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

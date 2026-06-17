@@ -304,16 +304,16 @@
                         if (index === 1) badgeStyle = "bg-[#D9D9D9] text-white"; 
                         if (index === 2) badgeStyle = "bg-[#D78B2D] text-white"; 
 
-                        // Pegamos os valores vindos do banco de dados ou colocamos um texto padrão caso esteja vazio
-                        const unidade = item.unidade_escolar || 'SESI';
-                        const estado = item.estado ? item.estado.toUpperCase() : 'SP';
+                        // Trata o texto deixando o estado sempre em maiúsculo
+                        const unidadeCompleta = item.unidade_escolar || 'SESI';
+                        const estadoSigla = item.estado ? item.estado.toUpperCase() : 'SP';
 
                         itemRow.innerHTML = `
                             <div class="flex items-center gap-5">
                                 <span class="w-10 h-10 rounded-full ${badgeStyle} flex items-center justify-center font-bold text-lg shadow-inner">${index + 1}º</span>
                                 <div>
                                     <p class="text-base font-black text-slate-800">${item.turma}</p>
-                                    <p class="text-sm font-semibold text-slate-500">${unidade} - ${estado}</p>
+                                    <p class="text-sm font-semibold text-slate-500">${unidadeCompleta} - ${estadoSigla}</p>
                                 </div>
                             </div>
                             <span class="text-base font-bold text-[#2965A7]">${item.total_minutos.toLocaleString('pt-BR')} min</span>
@@ -327,7 +327,7 @@
                 console.error("Erro ao processar ranking:", error);
             }
         }
-
+        
         function renderizarGrafico(labels, valores) {
             const ctx = document.getElementById('chart-individual').getContext('2d');
             if (chartInstance) chartInstance.destroy();
