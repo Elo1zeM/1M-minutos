@@ -257,11 +257,12 @@
 
                         data.historicoSemanal.forEach(item => {
                             if (!item.data_registro) return;
-                            const dataPura = item.data_registro.split('T')[0];
-                            const [ano, mes, dia] = dataPura.split('-');
-                            const dataObjeto = new Date(ano, mes - 1, dia);
+                            
+                            // CORREÇÃO DO FUSO HORÁRIO: Cria o objeto de data interpretando o UTC do banco
+                            // e converte de forma correta e limpa para o dia local do usuário no Brasil
+                            const dataObjeto = new Date(item.data_registro);
                             const diaSemanaTexto = diasSemanaMapa[dataObjeto.getDay()];
-
+                            
                             if (minutosPorDia[diaSemanaTexto] !== undefined) {
                                 minutosPorDia[diaSemanaTexto] += item.minutos_lidos;
                             }
@@ -273,7 +274,7 @@
                         renderizarGrafico(labels, valores);
                     } else {
                         document.getElementById('chart-total-minutes').innerText = 'Nenhuma leitura registrada ainda.';
-                        renderizarGrafico(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], [0, 0, 0, 0, 0, 0, 0]);
+                        renderizarGrafico(['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], [0, 0, 0, 0, 0, 0, 0]); 
                     }
                 }
             } catch (error) {
