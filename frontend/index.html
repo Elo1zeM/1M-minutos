@@ -258,9 +258,13 @@
                         data.historicoSemanal.forEach(item => {
                             if (!item.data_registro) return;
                             
-                            // CORREÇÃO DO FUSO HORÁRIO: Cria o objeto de data interpretando o UTC do banco
-                            // e converte de forma correta e limpa para o dia local do usuário no Brasil
-                            const dataObjeto = new Date(item.data_registro);
+                            // Força o JavaScript a ler o Ano, Mês e Dia exato gravado no banco, 
+                            // evitando que fusos horários joguem o dia para frente ou para trás.
+                            const dataPura = item.data_registro.split('T')[0];
+                            const [ano, mes, dia] = dataPura.split('-');
+                            
+                            // O mês no JavaScript começa em 0 (Janeiro = 0, Fevereiro = 1...)
+                            const dataObjeto = new Date(ano, mes - 1, dia);
                             const diaSemanaTexto = diasSemanaMapa[dataObjeto.getDay()];
                             
                             if (minutosPorDia[diaSemanaTexto] !== undefined) {

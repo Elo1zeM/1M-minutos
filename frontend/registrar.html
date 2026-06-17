@@ -221,7 +221,7 @@
             const dados = await response.json();
 
             if (dados.success) {
-                // Pega a data de hoje no fuso horário local correto (AAAA-MM-DD)
+                // Pega o dia de hoje no formato local (AAAA-MM-DD)
                 const hoje = new Date();
                 const ano = hoje.getFullYear();
                 const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -231,7 +231,7 @@
                 if (dados.historicoSemanal) {
                     minutesJaLidosHojeGlobal = dados.historicoSemanal
                         .filter(item => {
-                            // Isola o ano-mês-dia caso o banco retorne a data com o horário (Timestamp)
+                            // Compara o dia puro sem deixar o fuso horário interferir
                             const dataItem = item.data_registro.split('T')[0];
                             return dataItem === hojeStr;
                         })
@@ -243,7 +243,6 @@
 
                 progressFill.style.width = `${porcentagem}%`;
                 
-                // Desbloqueia os botões e atualiza a interface corretamente
                 btnMore.disabled = false;
                 btnLess.disabled = false;
                 btnConfirmar.disabled = false;
@@ -266,7 +265,6 @@
         } catch (error) {
             console.error("Erro ao buscar progresso:", error);
             progressTxt.innerText = "Não foi possível carregar seu saldo de minutos.";
-            
             btnMore.disabled = true;
             btnLess.disabled = true;
             btnConfirmar.disabled = true;
