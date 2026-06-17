@@ -304,17 +304,18 @@
                         if (index === 1) badgeStyle = "bg-[#D9D9D9] text-white"; 
                         if (index === 2) badgeStyle = "bg-[#D78B2D] text-white"; 
 
-                        const escola = item.unidade || 'SESI';
+                        // Pega o nome real da unidade vinda do banco (ex: "SENAI Paulista")
+                        // Se por acaso vier nulo, define um fallback genérico
+                        const escolaUnidade = item.unidade || 'SESI/SENAI';
                         const estadoSigla = item.estado ? item.estado.toUpperCase() : 'SP';
 
                         itemRow.innerHTML = `
                             <div class="flex items-center gap-5">
                                 <span class="w-10 h-10 rounded-full ${badgeStyle} flex items-center justify-center font-bold text-lg shadow-inner">${index + 1}º</span>
                                 <div>
-                                    <!-- Nome da Turma -->
                                     <p class="text-base font-black text-slate-800">${item.turma}</p>
-                                    <!-- Unidade e Estado Reais -->
-                                    <p class="text-sm font-semibold text-slate-500">${escola} - ${estadoSigla}</p>
+                                    <!-- Exibe o nome real completo guardado na coluna unidade -->
+                                    <p class="text-sm font-semibold text-slate-500">${escolaUnidade} - ${estadoSigla}</p>
                                 </div>
                             </div>
                             <span class="text-base font-bold text-[#2965A7]">${item.total_minutos.toLocaleString('pt-BR')} min</span>
