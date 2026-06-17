@@ -221,19 +221,25 @@
             const dados = await response.json();
 
             if (dados.success) {
-                // Pega o dia de hoje no formato local (AAAA-MM-DD)
-                const hoje = new Date();
-                const ano = hoje.getFullYear();
-                const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-                const dia = String(hoje.getDate()).padStart(2, '0');
+                // CORREÇÃO DO DIA DE HOJE EM BRASÍLIA (UTC-3)
+                // Garante que mesmo à noite, compare com a data correta alinhada ao banco
+                const hojeLocal = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+                const ano = hojeLocal.getFullYear();
+                const mes = String(hojeLocal.getMonth() + 1).padStart(2, '0');
+                const dia = String(hojeLocal.getDate()).padStart(2, '0');
                 const hojeStr = `${ano}-${mes}-${dia}`;
                 
                 if (dados.historicoSemanal) {
                     minutesJaLidosHojeGlobal = dados.historicoSemanal
                         .filter(item => {
-                            // Compara o dia puro sem deixar o fuso horário interferir
-                            const dataItem = item.data_registro.split('T')[0];
-                            return dataItem === hojeStr;
+                            // Converte a data salva no banco para o fuso de Brasília antes de checar se é hoje
+                            const dataBancoLocal = new Date(new Date(item.data_registro).toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+                            const anoB = dataBancoLocal.getFullYear();
+                            const mesB = String(dataBancoLocal.getMonth() + 1).padStart(2, '0');
+                            const diaB = String(dataBancoLocal.getDate()).padStart(2, '0');
+                            const dataItemStr = `${anoB}-${mesB}-${diaB}`;
+                            
+                            return dataItemStr === hojeStr;
                         })
                         .reduce((sum, item) => sum + item.minutos_lidos, 0);
                 }

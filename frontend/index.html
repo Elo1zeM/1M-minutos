@@ -239,6 +239,7 @@
             }
         }
 
+        
         async function carregarLogsLeitura() {
             try {
                 const response = await fetch(`${API_URL}/leitura/progresso-individual`, {
@@ -258,14 +259,10 @@
                         data.historicoSemanal.forEach(item => {
                             if (!item.data_registro) return;
                             
-                            // Força o JavaScript a ler o Ano, Mês e Dia exato gravado no banco, 
-                            // evitando que fusos horários joguem o dia para frente ou para trás.
-                            const dataPura = item.data_registro.split('T')[0];
-                            const [ano, mes, dia] = dataPura.split('-');
-                            
-                            // O mês no JavaScript começa em 0 (Janeiro = 0, Fevereiro = 1...)
-                            const dataObjeto = new Date(ano, mes - 1, dia);
-                            const diaSemanaTexto = diasSemanaMapa[dataObjeto.getDay()];
+                            // CONVERSÃO REAL PARA FUSO HORÁRIO DO BRASIL
+                            // Transforma a hora universal da nuvem no horário local exato de Brasília
+                            const dataLocal = new Date(new Date(item.data_registro).toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+                            const diaSemanaTexto = diasSemanaMapa[dataLocal.getDay()];
                             
                             if (minutosPorDia[diaSemanaTexto] !== undefined) {
                                 minutosPorDia[diaSemanaTexto] += item.minutos_lidos;
@@ -297,22 +294,26 @@
 
                 if (data.success && data.ranking && data.ranking.length > 0) {
                     container.innerHTML = '';
-
+                    
                     data.ranking.forEach((item, index) => {
                         const itemRow = document.createElement('div');
                         itemRow.className = "flex items-center justify-between bg-white px-6 py-5 rounded-2xl shadow-sm border border-slate-100";
+                        
+                        let badgeStyle = "bg-[#E2E2E2] text-slate-500"; 
+                        if (index === 0) badgeStyle = "bg-[#EED269] text-white"; 
+                        if (index === 1) badgeStyle = "bg-[#D9D9D9] text-white"; 
+                        if (index === 2) badgeStyle = "bg-[#D78B2D] text-white"; 
 
-                        let badgeStyle = "bg-[#E2E2E2] text-slate-500";
-                        if (index === 0) badgeStyle = "bg-[#EED269] text-white";
-                        if (index === 1) badgeStyle = "bg-[#D9D9D9] text-white";
-                        if (index === 2) badgeStyle = "bg-[#D78B2D] text-white";
+                        // Pegamos os valores vindos do banco de dados ou colocamos um texto padrão caso esteja vazio
+                        const unidade = item.unidade_escolar || 'SESI';
+                        const estado = item.estado ? item.estado.toUpperCase() : 'SP';
 
                         itemRow.innerHTML = `
                             <div class="flex items-center gap-5">
                                 <span class="w-10 h-10 rounded-full ${badgeStyle} flex items-center justify-center font-bold text-lg shadow-inner">${index + 1}º</span>
                                 <div>
                                     <p class="text-base font-black text-slate-800">${item.turma}</p>
-                                    <p class="text-sm font-medium text-slate-500">Ensino Regular</p>
+                                    <p class="text-sm font-semibold text-slate-500">${unidade} - ${estado}</p>
                                 </div>
                             </div>
                             <span class="text-base font-bold text-[#2965A7]">${item.total_minutos.toLocaleString('pt-BR')} min</span>
